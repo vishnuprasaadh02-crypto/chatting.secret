@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="ocean">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FamWave | Our Family. Our Private Space.</title>
+  <meta name="description" content="A private, modern family-only messaging space with calm water-wave aesthetics, glassmorphism, and secure chat.">
+  <meta name="theme-color" content="#071124">
+
+  <!-- Google Fonts: Space Grotesk + Plus Jakarta Sans + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="famwave-body">
+
+  <!-- Water Wave Background Canvas -->
+  <canvas id="wave-canvas" class="wave-canvas" aria-hidden="true"></canvas>
+
+  <!-- Ambient Light & Floating Water Spheres -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+  <div class="water-bubble b1" aria-hidden="true"></div>
+  <div class="water-bubble b2" aria-hidden="true"></div>
+  <div class="water-bubble b3" aria-hidden="true"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- ==================================================== -->
+  <!-- 1. AUTHENTICATION PORTAL (Family Gatekeeper) -->
+  <!-- ==================================================== -->
+  <section id="auth-screen" class="auth-screen active">
+    <div class="auth-card-wrapper">
+      
+      <!-- Logo & Branding -->
+      <div class="auth-brand">
+        <div class="auth-logo-icon">
+          <svg viewBox="0 0 48 48" class="wave-icon" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 24C10 20 14 20 18 24C22 28 26 28 30 24C34 20 38 20 42 24" stroke="url(#waveGrad1)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M8 32C12 28 16 28 20 32C24 36 28 36 32 32C36 28 40 28 44 32" stroke="url(#waveGrad2)" stroke-width="3" stroke-linecap="round" opacity="0.75"/>
+            <circle cx="24" cy="14" r="5" fill="url(#waveGrad1)"/>
+            <circle cx="14" cy="18" r="3.5" fill="url(#waveGrad2)"/>
+            <circle cx="34" cy="18" r="3.5" fill="url(#waveGrad2)"/>
+            <defs>
+              <linearGradient id="waveGrad1" x1="6" y1="14" x2="42" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38bdf8"/>
+                <stop offset="1" stop-color="#06b6d4"/>
+              </linearGradient>
+              <linearGradient id="waveGrad2" x1="8" y1="18" x2="44" y2="36" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#818cf8"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1 class="auth-title">Fam<span class="brand-accent">Wave</span></h1>
+        <p class="auth-tagline">Our Family. Our Private Space.</p>
+        <span class="auth-subtag">Just Family. Just Chat.</span>
+      </div>
+
+      <!-- STEP 1: Family Gatekeeper Login Form -->
+      <div id="auth-step-family" class="auth-step active">
+        <div class="auth-card glass-panel">
+          <div class="auth-header">
+            <h2>Family Room Gate</h2>
+            <p>Enter your secret family credentials to unlock your space.</p>
+          </div>
+
+          <form id="family-login-form" class="auth-form" autocomplete="off">
+            <div class="form-group">
+              <label for="family-id-input">Family ID</label>
+              <div class="input-with-icon">
+                <span class="input-icon">🏠</span>
+                <input type="text" id="family-id-input" placeholder="e.g. PRASAADH2026" required value="PRASAADH2026">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="family-pass-input">Secret Family Password</label>
+              <div class="input-with-icon">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="family-pass-input" placeholder="••••••••••••" required value="Family@2026">
+                <button type="button" class="btn-toggle-pwd" id="toggle-family-pwd" aria-label="Toggle Password Visibility">👁️</button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-glow">
+              <span>Enter Family Space</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </form>
+
+          <div class="auth-divider">
+            <span>OR</span>
+          </div>
+
+          <div class="auth-footer-actions">
+            <button type="button" class="btn btn-glass-secondary btn-block" id="btn-open-create-family">
+              ✨ Setup a New Family Space
+            </button>
+          </div>
+
+          <div class="auth-badge-note">
+            <span class="lock-icon">🛡️</span>
+            <span>Private & encrypted family room. No public signups or discovery.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Choose Member Identity -->
+      <div id="auth-step-member" class="auth-step">
+        <div class="auth-card glass-panel">
+          <div class="auth-header">
+            <div class="family-badge" id="member-select-family-badge">
+              <span class="family-badge-icon">🌊</span>
+              <span id="member-select-family-name">The Prasaadh Family</span>
+            </div>
+            <h2>Who are you?</h2>
+            <p>Select your family profile to enter the chat.</p>
+          </div>
+
+          <div class="member-selection-grid" id="member-selection-grid">
+            <!-- Dynamically populated member cards -->
+          </div>
+
+          <!-- Optional Member PIN Modal / Box -->
+          <div id="member-pin-box" class="member-pin-box hidden">
+            <div class="pin-box-header">
+              <span class="pin-avatar" id="pin-target-avatar">👨</span>
+              <div>
+                <h4 id="pin-target-name">Dad</h4>
+                <p>Please enter your 4-digit personal PIN</p>
+              </div>
+            </div>
+            <div class="pin-input-group">
+              <input type="password" maxlength="4" id="member-pin-input" placeholder="PIN" inputmode="numeric">
+              <button type="button" class="btn btn-primary btn-sm" id="btn-confirm-pin">Unlock</button>
+              <button type="button" class="btn btn-glass-secondary btn-sm" id="btn-cancel-pin">Back</button>
+            </div>
+            <p class="pin-error-msg hidden" id="pin-error-msg">Incorrect PIN. Please try again.</p>
+          </div>
+
+          <div class="auth-footer-actions mt-3">
+            <button type="button" class="btn-link-action" id="btn-back-to-family-login">
+              ← Switch Family
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================================================== -->
+  <!-- 2. CREATE / SETUP FAMILY MODAL -->
+  <!-- ==================================================== -->
+  <div id="setup-family-modal" class="modal-backdrop hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🌊</span>
+          <div>
+            <h3>Create New Family Space</h3>
+            <p>Setup a private sanctuary for your household</p>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btn-close-setup-modal" aria-label="Close Modal">&times;</button>
+      </div>
+
+      <form id="create-family-form" class="modal-body">
+        <div class="form-group">
+          <label for="new-family-name">Family Name</label>
+          <input type="text" id="new-family-name" placeholder="e.g. The Anderson Family" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="new-family-id">Family ID (Unique Code)</label>
+            <input type="text" id="new-family-id" placeholder="e.g. ANDERSON2026" required style="text-transform: uppercase;">
+          </div>
+          <div class="form-group flex-1">
+            <label for="new-family-pass">Secret Password</label>
+            <input type="password" id="new-family-pass" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Initial Family Members (At least 2)</label>
+          <div id="new-members-list" class="new-members-list">
+            <div class="member-form-row">
+              <span class="member-avatar-preview">👨</span>
+              <input type="text" class="new-member-name" placeholder="Name (e.g. Dad)" value="Dad" required>
+              <input type="text" class="new-member-role" placeholder="Role (e.g. Father)" value="Father">
+              <input type="password" maxlength="4" class="new-member-pin" placeholder="PIN (e.g. 1234)" value="1234">
+            </div>
+            <div class="member-form-row">
+              <span class="member-avatar-preview">👩</span>
+              <input type="text" class="new-member-name" placeholder="Name (e.g. Mom)" value="Mom" required>
+              <input type="text" class="new-member-role" placeholder="Role (e.g. Mother)" value="Mother">
+              <input type="password" maxlength="4" class="new-member-pin" placeholder="PIN (e.g. 5678)" value="5678">
+            </div>
+          </div>
+          <button type="button" class="btn btn-glass-secondary btn-sm mt-2" id="btn-add-member-field">
+            + Add Another Member
+          </button>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-glass-secondary" id="btn-cancel-create-family">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-glow">Create & Enter Space</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- 3. MAIN APP INTERFACE (Family Living Room) -->
+  <!-- ==================================================== -->
+  <main id="app-screen" class="app-screen hidden">
+    
+    <!-- TOP APP BAR -->
+    <header class="app-header glass-panel">
+      <div class="header-left">
+        <button class="btn-sidebar-toggle" id="btn-toggle-sidebar" aria-label="Toggle Members Sidebar">
+          <span>☰</span>
+        </button>
+        
+        <div class="brand-mini">
+          <div class="brand-mini-icon">🌊</div>
+          <span class="brand-mini-name">Fam<span class="brand-accent">Wave</span></span>
+        </div>
+
+        <div class="header-family-info">
+          <div class="family-name-wrapper">
+            <h2 id="header-family-name">The Prasaadh Family</h2>
+            <span class="privacy-badge">🔒 Private</span>
+          </div>
+          <p class="family-meta-stats" id="header-stats">5 Members • 3 Online</p>
+        </div>
+      </div>
+
+      <!-- Quick Member Switcher (Pair Demo / Testing bar) -->
+      <div class="demo-member-switcher" id="demo-switcher" title="Quick switch active family member for testing">
+        <span class="switcher-label">Active:</span>
+        <div class="active-member-pill" id="active-member-pill">
+          <span class="active-member-avatar" id="current-user-avatar">👦</span>
+          <span class="active-member-name" id="current-user-name">Vishnu</span>
+        </div>
+        <button class="btn-switch-user" id="btn-quick-switch" title="Switch User">⇄ Switch</button>
+      </div>
+
+      <div class="header-right">
+        <!-- Search Button -->
+        <button class="header-action-btn" id="btn-open-search" title="Search Messages" aria-label="Search Messages">
+          <span class="btn-icon">🔍</span>
+        </button>
+
+        <!-- Pinned Messages Button -->
+        <button class="header-action-btn" id="btn-open-pinned" title="Pinned Messages" aria-label="Pinned Messages">
+          <span class="btn-icon">📌</span>
+          <span class="badge-count" id="pinned-count-badge">2</span>
+        </button>
+
+        <!-- Notifications Button -->
+        <button class="header-action-btn" id="btn-open-notifications" title="Notifications" aria-label="Notifications">
+          <span class="btn-icon">🔔</span>
+          <span class="badge-count" id="notif-count-badge">0</span>
+        </button>
+
+        <!-- Current User Profile & Menu Button -->
+        <button class="header-user-btn" id="btn-open-my-profile" title="My Profile">
+          <div class="user-avatar-ring">
+            <span id="header-user-avatar">👦</span>
+            <span class="online-dot online"></span>
+          </div>
+        </button>
+
+        <!-- Exit / Logout Family Space -->
+        <button class="header-action-btn btn-logout" id="btn-family-logout" title="Lock Family Space" aria-label="Logout">
+          <span class="btn-icon">🚪</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CHAT CONTAINER -->
+    <div class="app-layout">
+      
+      <!-- SIDEBAR: FAMILY MEMBERS & ROOMS -->
+      <aside class="app-sidebar glass-panel" id="app-sidebar">
+        
+        <div class="sidebar-header">
+          <div class="sidebar-title-row">
+            <h3>Family Members</h3>
+            <span class="members-count" id="sidebar-member-count">5</span>
+          </div>
+          <p class="sidebar-subtitle">Our household circle</p>
+        </div>
+
+        <!-- Chat Rooms Switcher: Family Room vs Direct Messages -->
+        <div class="chat-room-tabs">
+          <button class="room-tab active" id="tab-room-main" data-room="main">
+            <span class="room-icon">🌊</span>
+            <span class="room-label">Family Living Room</span>
+            <span class="room-unread-badge hidden" id="main-unread-badge">0</span>
+          </button>
+        </div>
+
+        <!-- Members List -->
+        <div class="members-list-wrapper">
+          <div class="members-section-title">Members</div>
+          <div class="members-list" id="sidebar-members-list">
+            <!-- Dynamically populated member cards -->
+          </div>
+        </div>
+
+        <!-- Sidebar Footer: Family Management -->
+        <div class="sidebar-footer">
+          <button class="btn-sidebar-action" id="btn-manage-family">
+            <span>⚙️ Family Settings</span>
+          </button>
+          <div class="privacy-status-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-online-privacy" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="privacy-status-label">Show Online Status</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CHAT WORKSPACE AREA -->
+      <section class="chat-workspace">
+        
+        <!-- Active Channel / Member Banner -->
+        <div class="chat-room-banner glass-panel">
+          <div class="room-info">
+            <div class="room-avatar" id="room-banner-avatar">🌊</div>
+            <div class="room-details">
+              <h3 id="room-banner-title">Family Living Room</h3>
+              <p id="room-banner-desc">Everyone in The Prasaadh Family</p>
+            </div>
+          </div>
+
+          <div class="room-banner-actions">
+            <div class="live-activity" id="live-typing-indicator">
+              <span class="typing-text" id="typing-status-text">Mom is typing</span>
+              <span class="typing-wave">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGES STREAM CONTAINER -->
+        <div class="messages-container" id="messages-container">
+          
+          <!-- Sticky Date Separators and Messages will be rendered here -->
+          <div class="messages-stream" id="messages-stream">
+            <!-- Dynamically injected message bubbles -->
+          </div>
+
+          <!-- Floating Jump to Bottom Button -->
+          <button class="btn-scroll-bottom hidden" id="btn-scroll-bottom" aria-label="Scroll to bottom">
+            <span>↓ New Messages</span>
+          </button>
+        </div>
+
+        <!-- REPLY / EDIT CONTEXT BAR -->
+        <div class="message-context-bar hidden glass-panel" id="message-context-bar">
+          <div class="context-indicator-stripe"></div>
+          <div class="context-content">
+            <span class="context-label" id="context-label">Replying to Mom</span>
+            <p class="context-snippet" id="context-snippet">Dinner is ready 😊</p>
+          </div>
+          <button class="btn-close-context" id="btn-close-context" aria-label="Cancel reply">&times;</button>
+        </div>
+
+        <!-- MENTION AUTOCOMPLETE SUGGESTIONS POPUP -->
+        <div class="mention-autocomplete-box hidden glass-panel" id="mention-autocomplete-box">
+          <!-- Suggested family members injected here -->
+        </div>
+
+        <!-- CHAT INPUT TOOLBAR (Strictly Text, Image, File, Emoji — No voice/video) -->
+        <footer class="chat-input-wrapper glass-panel">
+          
+          <!-- Emoji Picker Popup -->
+          <div class="emoji-picker-panel hidden glass-panel" id="emoji-picker-panel">
+            <div class="emoji-tabs">
+              <button class="emoji-tab-btn active" data-cat="family">Family & Smiles</button>
+              <button class="emoji-tab-btn" data-cat="hearts">Love & Hugs</button>
+              <button class="emoji-tab-btn" data-cat="reactions">Reactions</button>
+              <button class="emoji-tab-btn" data-cat="home">Home & Food</button>
+            </div>
+            <div class="emoji-grid" id="emoji-picker-grid">
+              <!-- Dynamically populated emojis -->
+            </div>
+          </div>
+
+          <form id="chat-input-form" class="chat-input-form">
+            
+            <!-- Emoji Button -->
+            <button type="button" class="input-btn btn-emoji" id="btn-toggle-emoji" title="Insert Emoji" aria-label="Insert Emoji">
+              <span>😊</span>
+            </button>
+
+            <!-- Attachment Button (Image / Doc) -->
+            <div class="attachment-dropdown-wrapper">
+              <button type="button" class="input-btn btn-attach" id="btn-toggle-attach" title="Attach Photo or Document" aria-label="Attach File">
+                <span>📎</span>
+              </button>
+              
+              <div class="attachment-menu hidden glass-panel" id="attachment-menu">
+                <label class="attach-option">
+                  <input type="file" id="file-input-image" accept="image/*" class="hidden">
+                  <span class="attach-icon">🖼️</span>
+                  <span>Share Photo</span>
+                </label>
+                <label class="attach-option">
+                  <input type="file" id="file-input-doc" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" class="hidden">
+                  <span class="attach-icon">📄</span>
+                  <span>Share Document</span>
+                </label>
+                <button type="button" class="attach-option btn-sample-photo" id="btn-sample-photo">
+                  <span class="attach-icon">✨</span>
+                  <span>Insert Sample Family Photo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Message Textarea Input -->
+            <div class="input-text-wrapper">
+              <textarea 
+                id="chat-message-input" 
+                class="chat-textarea" 
+                placeholder="Type a family message... (use @ to mention)" 
+                rows="1" 
+                maxlength="2000"></textarea>
+            </div>
+
+            <!-- Send Message Button -->
+            <button type="submit" class="btn-send-message" id="btn-send-message" title="Send Message" aria-label="Send Message">
+              <svg viewBox="0 0 24 24" class="send-icon" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </form>
+
+        </footer>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================================================== -->
+  <!-- 4. SEARCH DRAWER -->
+  <!-- ==================================================== -->
+  <div id="search-drawer" class="side-drawer hidden">
+    <div class="drawer-panel glass-panel">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span>🔍</span>
+          <h3>Search Messages</h3>
+        </div>
+        <button class="btn-drawer-close" id="btn-close-search">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="search-input-group">
+          <input type="text" id="drawer-search-input" placeholder="Search keywords, events, dates...">
+          <button type="button" id="btn-clear-search-drawer" class="btn-clear-input">&times;</button>
+        </div>
+
+        <div class="search-filters">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="photos">Photos</button>
+          <button class="filter-chip" data-filter="files">Files</button>
+          <button class="filter-chip" data-filter="pinned">Pinned</button>
+        </div>
+
+        <div class="search-results-list" id="search-results-list">
+          <div class="empty-search-state">
+            <span>🌊</span>
+            <p>Type keywords to search across family history</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- 5. PINNED MESSAGES MODAL / DRAWER -->
+  <!-- ==================================================== -->
+  <div id="pinned-modal" class="modal-backdrop hidden">
+    <div class="modal-card glass-panel pinned-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📌</span>
+          <div>
+            <h3>Pinned Family Announcements</h3>
+            <p>Important family reminders and notices</p>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btn-close-pinned-modal">&times;</button>
+      </div>
+
+      <div class="pinned-list" id="pinned-messages-list">
+        <!-- Dynamically rendered pinned cards -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- 6. NOTIFICATIONS DRAWER -->
+  <!-- ==================================================== -->
+  <div id="notifications-drawer" class="side-drawer hidden">
+    <div class="drawer-panel glass-panel">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span>🔔</span>
+          <h3>Family Notifications</h3>
+        </div>
+        <div class="drawer-header-actions">
+          <button class="btn-link-action" id="btn-clear-notifs">Clear All</button>
+          <button class="btn-drawer-close" id="btn-close-notifications">&times;</button>
+        </div>
+      </div>
+
+      <div class="drawer-body">
+        <div class="notifications-list" id="notifications-list">
+          <!-- Dynamically populated notifications -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- 7. MEMBER PROFILE MODAL -->
+  <!-- ==================================================== -->
+  <div id="member-profile-modal" class="modal-backdrop hidden">
+    <div class="modal-card glass-panel profile-modal-card">
+      <button class="btn-modal-close profile-close" id="btn-close-profile-modal">&times;</button>
+      
+      <div class="profile-header-view">
+        <div class="profile-avatar-large">
+          <span id="prof-modal-avatar">👩</span>
+          <span class="profile-online-badge online" id="prof-modal-status-dot"></span>
+        </div>
+        <h3 id="prof-modal-name">Mom</h3>
+        <span class="profile-role-tag" id="prof-modal-role">Mother</span>
+        <span class="profile-status-text" id="prof-modal-status-text">🟢 Online</span>
+      </div>
+
+      <div class="profile-body-view">
+        <div class="profile-item">
+          <label>Family Bio</label>
+          <p class="profile-bio-text" id="prof-modal-bio">"Always here for my family ❤️"</p>
+        </div>
+
+        <div class="profile-item">
+          <label>Family ID</label>
+          <p class="profile-mono-text" id="prof-modal-family-id">PRASAADH2026</p>
+        </div>
+
+        <div class="profile-actions-view" id="prof-modal-actions">
+          <button class="btn btn-primary btn-block" id="btn-direct-message-profile">
+            💬 Send Direct Family Message
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- 8. FULLSCREEN IMAGE LIGHTBOX -->
+  <!-- ==================================================== -->
+  <div id="image-lightbox" class="lightbox-backdrop hidden" aria-hidden="true">
+    <div class="lightbox-toolbar">
+      <span class="lightbox-caption" id="lightbox-caption">Family Photo</span>
+      <div class="lightbox-controls">
+        <a id="lightbox-download-link" href="#" download class="btn-lightbox-ctrl" title="Download Photo">📥 Download</a>
+        <button class="btn-lightbox-ctrl" id="btn-close-lightbox" title="Close Viewer">&times;</button>
+      </div>
+    </div>
+    <div class="lightbox-content">
+      <img id="lightbox-img" src="" alt="Family Photo View">
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
